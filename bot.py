@@ -7,15 +7,30 @@ filtered_strings = ['POLLSCIEMO']
 
 bot = telegram.Bot(os.environ['tg_bot_antiflood'])
 
+
+def markdown_escape(s, code=False, escape_links=True):    
+    s = str(s).replace('`', '\\`')
+
+    if code:
+        return s
+
+    s = s.replace('\\', '\\\\').replace('*', '\\*').replace('_', '\\_')
+    if not escape_links:
+        return s
+
+    return s.replace('[', '\\[')
+
+
 def get_admin_mentions(chat_id):
     mentions = []
-    admins = bot.getChatAdministrators(-1001145055784)
+    admins = bot.getChatAdministrators(chat_id)
     for admin in admins:
         if admin.user.username:
-            mentions.append('@' + admin.user.username)
+            mentions.append('@' + markdown_escape(admin.user.username))
         else:
-            mentions.append('[{}](tg://user?id={})'.format(admin.user.first_name, admin.user.id))
+            mentions.append('[{}](tg://user?id={})'.format(markdown_escape(admin.user.first_name), admin.user.id))
     return ' '.join(mentions)
+
 
 def handle_update(update):
     if not update.message:
