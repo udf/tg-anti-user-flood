@@ -52,7 +52,8 @@ def handle_update(update):
     except Exception as e:
         if 'user is an administrator' in e.message.lower():
             message.reply_text('woah there, I almost lifted my hammer')
-        return
+            print('first user was admin, so not kicking anyone')
+            return
 
     for user_id in kickable:
         try:
