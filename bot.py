@@ -40,8 +40,9 @@ def handle_update(update):
     if not kickable:
         return
 
-    print('trying to kick {} user(s) from {}: {}'.format(
+    print('trying to kick {} user(s) from "{}" ({}): {}'.format(
         len(kickable),
+        message.chat.title,
         message.chat.id,
         kickable
     ))
@@ -52,14 +53,14 @@ def handle_update(update):
     except Exception as e:
         if 'user is an administrator' in e.message.lower():
             message.reply_text('woah there, I almost lifted my hammer')
-            print('first user was admin, so not kicking anyone')
+            print('  first user was admin, so not kicking anyone')
             return
 
     for user_id in kickable:
         try:
             message.bot.kickChatMember(message.chat.id, user_id)
         except Exception as e:
-            print('failed to kick', user_id, e, type(e))
+            print('  failed to kick', user_id, e, type(e))
 
     message.reply_text('{}, here are the ids: {}'.format(
         get_admin_mentions(message.chat.id),
