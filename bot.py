@@ -8,27 +8,22 @@ filtered_strings = ['POLLSCIEMO']
 bot = telegram.Bot(os.environ['tg_bot_antiflood'])
 
 
-def markdown_escape(s, code=False, escape_links=True):    
-    s = str(s).replace('`', '\\`')
+def html_escape(s):    
+    return str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
-    if code:
-        return s
-
-    s = s.replace('\\', '\\\\').replace('*', '\\*').replace('_', '\\_')
-    if not escape_links:
-        return s
-
-    return s.replace('[', '\\[')
-
+def get_html_mention(user_id, text):
+    return '<a href="tg://user?id={}">{}</a>'.format(user_id, html_escape(text))
 
 def get_admin_mentions(chat_id):
     mentions = []
     admins = bot.getChatAdministrators(chat_id)
     for admin in admins:
+        if admin.user.is_bot:
+            continue
         if admin.user.username:
-            mentions.append('@' + markdown_escape(admin.user.username))
+            mentions.append('@' + admin.user.username)
         else:
-            mentions.append('[{}](tg://user?id={})'.format(markdown_escape(admin.user.first_name), admin.user.id))
+            mentions.append(get_html_mention(admin.user.id, admin.user.first_name))
     return ' '.join(mentions)
 
 
@@ -64,23 +59,23 @@ def handle_update(update):
 
     # if the first user is an admin, then we shouldn't kick anyone
     try:
-        message.bot.kickChatMember(message.chat.id, kickable.pop(0))
+        message.bot.kickChatMember(message.chat.id, kickable[0])
     except Exception as e:
         if 'user is an administrator' in e.message.lower():
             message.reply_text('woah there, I almost lifted my hammer')
             print('  first user was admin, so not kicking anyone')
             return
 
-    for user_id in kickable:
+    for i in range(1, len(kickable)):
         try:
-            message.bot.kickChatMember(message.chat.id, user_id)
+            message.bot.kickChatMember(message.chat.id, kickable[i])
         except Exception as e:
-            print('  failed to kick', user_id, e, type(e))
+            print('  failed to kick', kickable[i], e, type(e))
 
     message.reply_text('{}, here are the ids: {}'.format(
         get_admin_mentions(message.chat.id),
-        ' '.join(str(v) for v in kickable)
-    ), parse_mode='Markdown')
+        ' '.join(get_html_mention(v, v) for v in kickable)
+    ), parse_mode='HTML')
 
 
 next_update_id = -100
